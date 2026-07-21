@@ -23,10 +23,15 @@
 	</developers>
 	<modules>
 		<module>S01-chat-demo</module>
+		<module>S01-chat-demo-zfd</module>
 		<module>S02-prompt-demo</module>
+		<module>S02-prompt-demo-zfd</module>
 		<module>S03-structured-output</module>
+		<module>S03-structured-output-zfd</module>
 		<module>S04-chat-memory</module>
+		<module>S04-chat-memory-zfd</module>
 		<module>S05-self-model</module>
+		<module>S05-self-model-zfd</module>
         <module>S06-function-tool</module>
         <module>S07-mcp-server</module>
         <module>S08-mcp-server-basic-auth</module>

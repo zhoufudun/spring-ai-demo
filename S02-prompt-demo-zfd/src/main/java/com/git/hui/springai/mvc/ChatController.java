@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -85,6 +84,20 @@ public class ChatController {
         return Map.of("generation", generation == null ? "" : generation.getOutput().getText());
     }
 
+    @GetMapping("/ai/girlGenerate")
+    public Map girlGenerate(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
+        Prompt prompt = new Prompt(
+                Arrays.asList(new SystemMessage("你现在扮演一个可爱的女朋友角色，我扮演你的男朋友"), new UserMessage(message)),
+                ZhiPuAiChatOptions.builder()
+                        .model(ZhiPuAiApi.ChatModel.GLM_4_Flash.getValue())
+                        .temperature(0.7d)
+                        .user("zfd-001")
+                        .build()
+        );
+        Generation generation = chatModel.call(prompt).getResult();
+        return Map.of("generation", generation == null ? "" : generation.getOutput().getText());
+    }
+
 
     @GetMapping(path = "/ai/roleChat")
     public String roleChat(@RequestParam(value = "personality", defaultValue = "温柔") String personality,
@@ -98,6 +111,22 @@ public class ChatController {
 
         Generation generation = chatModel.call(prompt).getResult();
         return generation == null ? "" : generation.getOutput().getText();
+    }
+
+    @GetMapping(path = "/ai/roleChat2")
+    public String roleChat2(@RequestParam(value = "RoleA", defaultValue = "温柔") String roleA,
+                            @RequestParam(value = "aiRole", defaultValue = "女朋友") String aiRole,
+                            @RequestParam(value = "RoleB", defaultValue = "男朋友") String roleB,
+                            @RequestParam(value = "msg", defaultValue = "最近心情不好") String msg) {
+
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate("我们现在开始角色扮演的对话，你来扮演{RoleA}的{aiRole}, 我来扮演{RoleB}");
+        Message message = systemPromptTemplate.createMessage(Map.of("RoleA", roleA, "aiRole", aiRole, "RoleB", roleB));
+
+        Prompt prompt = new Prompt(message, new UserMessage(msg));
+
+        Generation result = chatModel.call(prompt).getResult();
+
+        return result == null ? "" : result.getOutput().getText();
     }
 
     @GetMapping(path = "/ai/roleChatV2")
@@ -116,8 +145,27 @@ public class ChatController {
         return generation == null ? "" : generation.getOutput().getText();
     }
 
+    @GetMapping(path = "/ai/roleChatV4")
+    public String roleChatV4(@RequestParam(value = "personality", defaultValue = "温柔") String personality,
+                             @RequestParam(value = "aiRole", defaultValue = "女朋友") String aiRole,
+                             @RequestParam(value = "myRole", defaultValue = "男朋友") String myRole,
+                             @RequestParam(value = "msg", defaultValue = "最近心情不好") String msg) {
+        PromptTemplate promptTemplate = PromptTemplate.builder().renderer(StTemplateRenderer.builder()
+                        .startDelimiterToken('[').endDelimiterToken(']').build())
+                .template("我们现在开始角色扮演的对话，你来扮演[personality]的[aiRole], 我来扮演[myRole]")
+                .build();
+        String text = promptTemplate.render(Map.of("personality", personality, "aiRole", aiRole, "myRole", myRole));
+        Prompt prompt = new Prompt(new SystemMessage(text), new UserMessage(msg));
+
+        Generation generation = chatModel.call(prompt).getResult();
+        return generation == null ? "" : generation.getOutput().getText();
+    }
+
     @Value("classpath:/prompts/system-message.st")
     private Resource systemResource;
+
+    @Value("classpath:/prompts/system-message-zfd.st")
+    private Resource systemResource_zfd;
 
     @GetMapping(path = "/ai/roleChatV3")
     public String roleChatV3(@RequestParam(value = "personality", defaultValue = "温柔") String personality,
@@ -126,6 +174,19 @@ public class ChatController {
                              @RequestParam(value = "msg", defaultValue = "最近心情不好") String msg) {
         SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemResource);
         Message text = systemPromptTemplate.createMessage(Map.of("personality", personality, "aiRole", aiRole, "myRole", myRole));
+        Prompt prompt = new Prompt(text, new UserMessage(msg));
+
+        Generation generation = chatModel.call(prompt).getResult();
+        return generation == null ? "" : generation.getOutput().getText();
+    }
+
+    @GetMapping(path = "/ai/roleChatV5")
+    public String roleChatV5(@RequestParam(value = "RoleA", defaultValue = "温柔") String roleA,
+                             @RequestParam(value = "aiRole", defaultValue = "女朋友") String aiRole,
+                             @RequestParam(value = "RoleB", defaultValue = "男朋友") String roleB,
+                             @RequestParam(value = "msg", defaultValue = "最近心情不好") String msg) {
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemResource_zfd);
+        Message text = systemPromptTemplate.createMessage(Map.of("RoleA", roleA, "aiRole", aiRole, "RoleB", roleB));
         Prompt prompt = new Prompt(text, new UserMessage(msg));
 
         Generation generation = chatModel.call(prompt).getResult();
