@@ -35,12 +35,19 @@
         <module>S06-function-tool</module>
 		<module>S06-function-tool-zfd</module>
         <module>S07-mcp-server</module>
+		<module>S07-mcp-server-zfd</module>
         <module>S08-mcp-server-basic-auth</module>
+		<module>S08-mcp-server-basic-auth-zfd</module>
         <module>S09-chat-client</module>
+		<module>S09-chat-client-zfd</module>
         <module>S10-cost-advise</module>
+		<module>S10-cost-advise-zfd</module>
 		<module>S11-image-model</module>
+		<module>S11-image-model-zfd</module>
         <module>S12-multimodality-model</module>
+		<module>S12-multimodality-model-zfd</module>
 		<module>S13-mcp-client-chat</module>
+		<module>S13-mcp-client-chat-zfd</module>
         <module>advance-projects</module>
         <module>app-projects</module>
         <module>S15-openai-style-model</module>

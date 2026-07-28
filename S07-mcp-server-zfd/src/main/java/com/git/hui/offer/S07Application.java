@@ -1,0 +1,19 @@
+package com.git.hui.offer;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
+
+/**
+ *
+ * http://localhost:8080/sse
+ *
+ * @author YiHui
+ * @date 2025/7/11
+ */
+@SpringBootApplication
+public class S07Application {
+    public static void main(String[] args) {
+        SpringApplication.run(S07Application.class, args);
+    }
+}

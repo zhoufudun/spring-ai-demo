@@ -143,15 +143,15 @@ public class ChatController {
     @RequestMapping(path = "timeByDeclareFunc")
     public String getTimeByDeclareFunc(@RequestParam(defaultValue = "现在什么时间") String msg) {
         System.out.println("通过类名称："+msg); // 类名为啥不是大写的N
-        return chatClient.prompt(msg).tools("nowService").call().content();
+        return chatClient.prompt(msg).tools(new NowService()).call().content();
     }
 
-    // 不通
+    // 可以
     @RequestMapping(path = "timeByDeclareFun2")
     public String getTimeByDeclareFunc2(@RequestParam(defaultValue = "现在什么时间") String msg) {
         // 通过类名称
         System.out.println("通过类名称："+msg); // 类名为啥不是大写的N
-        return chatClient.prompt(msg).tools("NowService").call().content();
+        return chatClient.prompt(msg).tools(new ZFDDateTimeTools()).call().content();
     }
 
     class DateTimeTools {
