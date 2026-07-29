@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 美女视频生成器</title>
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --card-bg: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --accent-1: #ff6b9d;
+    --accent-2: #c44dff;
+    --text: #e8e8f0;
+    --text-dim: #8888a8;
+    --radius: 14px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -20%, rgba(100, 200, 255, 0.12), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0, 180, 255, 0.08), transparent),
+      radial-gradient(ellipse 40% 40% at 20% 50%, rgba(100, 140, 255, 0.06), transparent);
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .header { text-align: center; margin-bottom: 4px; }
+  .header .icon { font-size: 44px; margin-bottom: 8px; display: block; }
+  .header h1 {
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, #4dc9f6, #7c4dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+  }
+  .header p { color: var(--text-dim); font-size: 14px; margin-top: 6px; letter-spacing: 0.5px; }
+
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .form-row { display: flex; gap: 12px; }
+  .form-row.single { flex-direction: column; }
+
+  .form-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .form-group label {
+    font-size: 13px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .select-wrapper { position: relative; }
+  .select-wrapper select {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 15px;
+    padding: 12px 36px 12px 14px; cursor: pointer;
+    transition: var(--transition); font-family: inherit; outline: none;
+  }
+  .select-wrapper select:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07); }
+  .select-wrapper select:focus { border-color: #7c4dff; box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.12); }
+  .select-wrapper::after {
+    content: ''; position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%); width: 0; height: 0;
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid var(--text-dim); pointer-events: none;
+  }
+
+  .btn-generate {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 700;
+    font-family: inherit; color: #fff; border: none; border-radius: 12px;
+    cursor: pointer; background: linear-gradient(135deg, #4dc9f6, #7c4dff);
+    transition: var(--transition); letter-spacing: 1px; position: relative; overflow: hidden;
+  }
+  .btn-generate:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124, 77, 255, 0.3); }
+  .btn-generate:active:not(:disabled) { transform: translateY(0); }
+  .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-generate .spinner {
+    display: none; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  .btn-generate.loading .spinner { display: inline-block; }
+  .btn-generate.loading .btn-text { vertical-align: middle; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Video Area ── */
+  .video-area {
+    position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius);
+    overflow: hidden; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .video-area video {
+    width: 100%; height: 100%; object-fit: contain;
+    display: none; transition: opacity 0.4s;
+  }
+  .video-area video.visible { display: block; }
+
+  .placeholder { text-align: center; color: var(--text-dim); }
+  .placeholder .ph-icon { font-size: 56px; display: block; margin-bottom: 12px; opacity: 0.5; }
+  .placeholder .ph-text { font-size: 14px; line-height: 1.6; }
+
+  /* ── Loading Overlay ── */
+  .loading-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(10,10,26,0.85); flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px; z-index: 2;
+  }
+  .loading-overlay.active { display: flex; }
+  .loading-ring {
+    width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: #7c4dff; border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  .loading-text { font-size: 14px; color: var(--text-dim); animation: pulse 1.5s ease-in-out infinite; }
+  .loading-status { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Progress Bar ── */
+  .progress-bar-wrap {
+    width: 200px; height: 4px; background: rgba(255,255,255,0.08);
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: linear-gradient(90deg, #4dc9f6, #7c4dff);
+    border-radius: 2px; width: 0%;
+    animation: progressAnim 2s ease-in-out infinite;
+  }
+  @keyframes progressAnim {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+
+  /* ── Protocol Warning ── */
+  .protocol-warn {
+    display: none; background: rgba(255,170,68,0.1);
+    border: 1px solid rgba(255,170,68,0.3); border-radius: 10px;
+    padding: 14px 18px; text-align: center; color: #ffc978;
+    font-size: 13px; line-height: 1.7;
+  }
+  .protocol-warn.visible { display: block; }
+  .protocol-warn strong { color: #ffaa44; font-family: monospace; font-size: 14px; }
+
+  .error-msg { display: none; color: #ff6b6b; font-size: 13px; text-align: center; padding: 8px; }
+  .error-msg.visible { display: block; }
+
+  /* ── Actions ── */
+  .actions { display: flex; gap: 10px; }
+  .btn-outline {
+    flex: 1; padding: 11px; font-size: 14px; font-weight: 600;
+    font-family: inherit; color: var(--text); background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+    transition: var(--transition); letter-spacing: 0.5px;
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+  .btn-outline:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .prompt-tag {
+    display: none; text-align: center; font-size: 12px; color: var(--text-dim);
+    padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; word-break: break-all;
+  }
+  .prompt-tag.visible { display: block; }
+
+  /* ── Textarea ── */
+  .desc-textarea {
+    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit;
+    padding: 12px 14px; resize: vertical; min-height: 56px; max-height: 120px;
+    transition: var(--transition); outline: none; line-height: 1.5;
+  }
+  .desc-textarea::placeholder { color: rgba(255,255,255,0.2); }
+  .desc-textarea:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07); }
+  .desc-textarea:focus { border-color: #7c4dff; box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.12); }
+
+  @media (max-width: 480px) {
+    .form-row { flex-direction: column; }
+    .container { gap: 16px; }
+    .card { padding: 18px; gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <span class="icon">&#x1f3ac;</span>
+    <h1>AI 美女视频生成器</h1>
+    <p>选择你喜欢的风格，AI 为你生成专属动态视频</p>
+  </div>
+
+  <div class="protocol-warn" id="protocolWarn">
+    请通过 <strong>http://localhost:8080/video.html</strong> 访问此页面，<br>不要直接双击文件打开（file:// 协议无法请求 API）。
+  </div>
+
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group">
+        <label>美女类型</label>
+        <div class="select-wrapper">
+          <select id="beautyType">
+            <option value="甜美可爱">甜美可爱</option>
+            <option value="性感迷人">性感迷人</option>
+            <option value="优雅知性">优雅知性</option>
+            <option value="清纯自然">清纯自然</option>
+            <option value="高冷冷艳">高冷冷艳</option>
+            <option value="复古港风">复古港风</option>
+            <option value="异域风情">异域风情</option>
+            <option value="御姐霸气">御姐霸气</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>国家 / 地区</label>
+        <div class="select-wrapper">
+          <select id="country">
+            <option value="中国">中国</option>
+            <option value="日本">日本</option>
+            <option value="韩国">韩国</option>
+            <option value="欧美">欧美</option>
+            <option value="俄罗斯">俄罗斯</option>
+            <option value="印度">印度</option>
+            <option value="泰国">泰国</option>
+            <option value="中东">中东</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label>体态类型</label>
+        <div class="select-wrapper">
+          <select id="bodyType">
+            <option value="苗条纤细">苗条纤细</option>
+            <option value="丰满圆润">丰满圆润</option>
+            <option value="运动健美">运动健美</option>
+            <option value="娇小玲珑">娇小玲珑</option>
+            <option value="高挑修长">高挑修长</option>
+            <option value="微胖可爱">微胖可爱</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row single">
+      <div class="form-group">
+        <label>自定义描述（可选）</label>
+        <textarea class="desc-textarea" id="customDesc"
+          placeholder="例如：在海边漫步、优雅转身、微笑回眸、长发随风飘动..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="btnGenerate" onclick="generateVideo()">
+      <span class="spinner"></span>
+      <span class="btn-text">&#x1f3ac; 生成美女视频</span>
+    </button>
+
+    <div class="prompt-tag" id="promptTag"></div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- Video Display -->
+  <div class="video-area" id="videoArea">
+    <div class="placeholder" id="placeholder">
+      <span class="ph-icon">&#x1f4fd;</span>
+      <div class="ph-text">
+        选择风格后点击生成<br>AI 将为你创作专属美女视频
+      </div>
+    </div>
+    <video id="resultVideo" controls playsinline></video>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-ring"></div>
+      <div class="loading-text" id="loadingText">AI 正在创作中，请稍候...</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+      <div class="loading-status" id="loadingStatus"></div>
+    </div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none;">
+    <button class="btn-outline" id="btnDownload" onclick="downloadVideo()" disabled>
+      &#x1f4e5; 下载视频
+    </button>
+    <button class="btn-outline" onclick="generateVideo()">
+      &#x1f504; 重新生成
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  if (window.location.protocol === 'file:') {
+    document.getElementById('protocolWarn').classList.add('visible');
+    document.getElementById('btnGenerate').disabled = true;
+  }
+})();
+
+var currentVideoUrl = null;
+var pollTimer = null;
+var pollCount = 0;
+
+function buildPrompt() {
+  var beautyType = document.getElementById('beautyType').value;
+  var country = document.getElementById('country').value;
+  var bodyType = document.getElementById('bodyType').value;
+  var customDesc = document.getElementById('customDesc').value.trim();
+
+  var prompt = country + '风格' + bodyType + '身材的' + beautyType +
+         '美女短视频，精致的五官和妆容，自然的姿态和表情，' +
+         '柔和的动态画面，电影级光影，高画质';
+
+  if (customDesc) {
+    prompt += '，' + customDesc;
+  }
+
+  return prompt;
+}
+
+function getBase() {
+  if (window.location.origin === 'null' || !window.location.origin) {
+    return 'http://localhost:8080';
+  }
+  return window.location.origin;
+}
+
+async function generateVideo() {
+  var btn = document.getElementById('btnGenerate');
+  var loading = document.getElementById('loadingOverlay');
+  var placeholder = document.getElementById('placeholder');
+  var resultVideo = document.getElementById('resultVideo');
+  var errorMsg = document.getElementById('errorMsg');
+  var actions = document.getElementById('actions');
+  var promptTag = document.getElementById('promptTag');
+  var btnDownload = document.getElementById('btnDownload');
+  var loadingText = document.getElementById('loadingText');
+  var loadingStatus = document.getElementById('loadingStatus');
+
+  // Cleanup previous
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  pollCount = 0;
+  currentVideoUrl = null;
+
+  errorMsg.classList.remove('visible');
+  errorMsg.textContent = '';
+  resultVideo.classList.remove('visible');
+  resultVideo.src = '';
+  placeholder.style.display = 'block';
+  actions.style.display = 'none';
+  promptTag.classList.remove('visible');
+  btnDownload.disabled = true;
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  loading.classList.add('active');
+  loadingText.textContent = '正在提交视频生成任务...';
+  loadingStatus.textContent = '';
+
+  try {
+    var prompt = buildPrompt();
+    var base = getBase();
+
+    // Step 1: Submit video generation task
+    var submitUrl = new URL('/genVideo', base);
+    var formData = new URLSearchParams();
+    formData.append('msg', prompt);
+
+    var submitResp = await fetch(submitUrl.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+
+    if (!submitResp.ok) {
+      var errText = await submitResp.text().catch(function() { return '未知错误'; });
+      throw new Error('提交失败 (' + submitResp.status + '): ' + errText);
+    }
+
+    var submitResult = await submitResp.json();
+    var taskId = submitResult.id;
+
+    if (!taskId) {
+      throw new Error('未获取到任务 ID，响应: ' + JSON.stringify(submitResult));
+    }
+
+    // Show prompt
+    promptTag.textContent = '提示词: ' + prompt;
+    promptTag.classList.add('visible');
+
+    loadingText.textContent = '视频生成中，预计需要 1-3 分钟...';
+    loadingStatus.textContent = '任务 ID: ' + taskId;
+
+    // Step 2: Poll for result
+    pollTimer = setInterval(function() {
+      pollResult(taskId, base, function(err, videoUrl) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+
+        if (err) {
+          loading.classList.remove('active');
+          errorMsg.textContent = '生成失败: ' + err;
+          errorMsg.classList.add('visible');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
+
+        currentVideoUrl = videoUrl;
+        var video = document.getElementById('resultVideo');
+        video.src = videoUrl;
+        video.classList.add('visible');
+        document.getElementById('placeholder').style.display = 'none';
+        loading.classList.remove('active');
+
+        document.getElementById('actions').style.display = 'flex';
+        document.getElementById('btnDownload').disabled = false;
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      });
+    }, 5000); // poll every 5 seconds
+
+  } catch (err) {
+    console.error(err);
+    var msg = err.message || '未知错误';
+    if (msg.indexOf('Failed to fetch') !== -1) {
+      msg = '无法连接后端服务，请确认 Spring Boot 已启动，端口 8080，通过 http://localhost:8080/video.html 访问';
+    }
+    errorMsg.textContent = '生成失败: ' + msg;
+    errorMsg.classList.add('visible');
+    loading.classList.remove('active');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function pollResult(taskId, base, callback) {
+  pollCount++;
+  var loadingStatus = document.getElementById('loadingStatus');
+  var loadingText = document.getElementById('loadingText');
+
+  loadingStatus.textContent = '任务 ID: ' + taskId + ' | 轮询第 ' + pollCount + ' 次';
+  loadingText.textContent = '视频生成中，预计需要 1-3 分钟...';
+
+  try {
+    var url = new URL('/genVideo/result?id=' + encodeURIComponent(taskId), base);
+    var resp = await fetch(url.toString());
+
+    if (!resp.ok) {
+      var errText = await resp.text().catch(function() { return '未知错误'; });
+      callback('查询失败 (' + resp.status + '): ' + errText, null);
+      return;
+    }
+
+    var result = await resp.json();
+    var status = result.task_status;
+
+    if (status === 'SUCCESS') {
+      var videoUrl = result.video_url;
+      if (!videoUrl) {
+        callback('任务成功但未返回视频地址', null);
+        return;
+      }
+      callback(null, videoUrl);
+    } else if (status === 'FAIL') {
+      callback('视频生成任务失败', null);
+    }
+    // PROCESSING: continue polling
+
+  } catch (err) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+    callback('轮询出错: ' + (err.message || '未知错误'), null);
+  }
+}
+
+function downloadVideo() {
+  if (!currentVideoUrl) return;
+  var a = document.createElement('a');
+  a.href = currentVideoUrl;
+  a.download = 'ai-video-' + Date.now() + '.mp4';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+
+</body>
+</html>
