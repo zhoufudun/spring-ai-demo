@@ -22,12 +22,15 @@ public class ChatController {
     private final ChatClient chatClient;
 
     /**
-     * 手动设置阿里的百炼模型
+     * 阿里的百炼模型
      */
     private final ChatModel dashModel;
 
 
     public ChatController(ChatModel chatModel, Environment environment) {
+        // openai的starter自动装配 OpenAiChatModel
+        // class org.springframework.ai.openai.OpenAiChatModel
+        System.out.println(chatModel.getClass());
         chatClient = ChatClient.builder(chatModel)
                 .defaultAdvisors(new SimpleLoggerAdvisor())
                 .build();
@@ -41,6 +44,7 @@ public class ChatController {
                 .openAiApi(openAiApi)
                 .defaultOptions(OpenAiChatOptions.builder().model("qwen-plus").build())
                 .build();
+        System.out.println(dashModel);
 
     }
 

@@ -51,7 +51,9 @@
         <module>advance-projects</module>
         <module>app-projects</module>
         <module>S15-openai-style-model</module>
+		<module>S15-openai-style-model-zfd</module>
         <module>S16-stream-call</module>
+		<module>S16-stream-call-zfd</module>
         <module>S17-reasoncontent</module>
         <module>S18-dashscop-audio</module>
         <module>S19-audio-transaction</module>
