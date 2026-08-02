@@ -55,9 +55,12 @@
         <module>S16-stream-call</module>
 		<module>S16-stream-call-zfd</module>
         <module>S17-reasoncontent</module>
+		<module>S17-reasoncontent-zfd</module>
         <module>S18-dashscop-audio</module>
+		<module>S18-dashscop-audio-zfd</module>
         <module>S19-audio-transaction</module>
         <module>S20-manual-tool-execute</module>
+		<module>S20-manual-tool-execute-zfd</module>
         <module>ali</module>
         <module>spring-ai-demo-starter</module>
     </modules>
