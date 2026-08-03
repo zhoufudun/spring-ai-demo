@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    # 本地开发环境，使用h2数据库，减少外部依赖项
+    url: jdbc:h2:file:${user.dir}/advance-projects/A02-memory-jdbc-h2-zfd/datas/test-db;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      # 启动服务访问：http://127.0.0.1:8080/h2-console/login.do 其中的jdbc url填写如下
+      # jdbc:h2:file:D:/study/Desktop/Desktop/study/spring-ai-demo/advance-projects/A02-memory-jdbc-h2-zfd/datas/test-db;DB_CLOSE_DELAY=-1
+  ai:
+    chat:
+      memory:
+        repository:
+          jdbc:
+            # 因为我们使用的是 h2:file 方式，因此这里还是选择 always 始终创建数据库，不然不会自动创建表
+            # 如果我们使用的是 h2:mem 模式，则这里选择 embedded，SpringBoot会自行执行下面的 schema
+            initialize-schema: always
+            schema: classpath:schema-h2.sql
+            platform: h2
+    zhipuai:
+      # api-key 使用你自己申请的进行替换；如果为了安全考虑，可以通过启动参数进行设置
+      api-key: ${zhipuai-api-key}
+      chat: # 聊天模型
+        options:
+          model: GLM-4-Flash
+
+
+
+# 修改日志级别
+logging:
+  level:
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: debug

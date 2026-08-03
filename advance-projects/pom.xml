@@ -14,7 +14,9 @@
     <packaging>pom</packaging>
     <modules>
         <module>A02-memory-jdbc-h2</module>
+        <module>A02-memory-jdbc-h2-zfd</module>
         <module>A01-memory-jdbc-mysql</module>
+        <module>A01-memory-jdbc-mysql-zfd</module>
         <module>A03-memory-redis</module>
         <module>A04-memory-agent-langgraph</module>
         <module>A05-agent-langgraph-simple</module>
