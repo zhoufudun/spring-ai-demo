@@ -30,6 +30,16 @@ public class MessageDeserializer extends JsonDeserializer<Message> {
             "ASSISTANT", UserMessage::new
     );
 
+    /**
+     * 我们实现一个自定义的反序列化策略，在获取数据时，只要Message中的 messageType + text，
+     * 因为这些会一并传递给大模型，其他的元数据并没有太大意义，还会消耗我们的token
+     *
+     * @param p
+     * @param ctxt
+     * @return
+     * @throws IOException
+     * @throws JacksonException
+     */
     @Override
     public Message deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
         JsonNode node = p.getCodec().readTree(p);

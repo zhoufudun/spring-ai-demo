@@ -39,6 +39,19 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
         </dependency>
+<!--        https://github.com/zhoufudun/redis-mock   自己下载打包-->
+        <dependency>
+            <groupId>com.github.microwww</groupId>
+            <artifactId>redis-server</artifactId>
+            <version>0.3.6</version>
+<!--            <scope>test</scope>-->
+        </dependency>
+<!--        https://github.com/zhoufudun/redis-mock  自己下载打包-->
+        <dependency>
+            <groupId>com.github.microwww</groupId>
+            <artifactId>mocker-redis-spring-boot-starter</artifactId>
+            <version>5.3.0</version>
+        </dependency>
     </dependencies>
 
 </project>

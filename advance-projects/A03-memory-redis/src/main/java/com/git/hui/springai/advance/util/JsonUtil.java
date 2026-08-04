@@ -2,8 +2,10 @@ package com.git.hui.springai.advance.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import org.springframework.ai.chat.messages.Message;
 
 import java.io.IOException;
@@ -18,6 +20,9 @@ public class JsonUtil {
     private static ObjectMapper mapper = new ObjectMapper();
 
     static {
+        /**
+         * 定义保存到redis的消息的反序列化方式
+         */
         mapper.findAndRegisterModules();
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Message.class, new MessageDeserializer());
