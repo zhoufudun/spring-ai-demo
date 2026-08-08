@@ -19,7 +19,9 @@
         <module>A01-memory-jdbc-mysql-zfd</module>
         <module>A03-memory-redis</module>
         <module>A04-memory-agent-langgraph</module>
+        <module>A04-memory-agent-langgraph-zfd</module>
         <module>A05-agent-langgraph-simple</module>
+        <module>A05-agent-langgraph-simple-zfd</module>
         <module>A06-ReAct-agent</module>
     </modules>
 

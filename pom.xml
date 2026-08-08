@@ -73,7 +73,8 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-ai.version>1.1.2</spring-ai.version>
-		<langgraph4j.version>1.6.0-rc4</langgraph4j.version>
+<!--		因为：A05-agent-langgraph-simple-zfd 执行报错，所以改为1.8.5-->
+		<langgraph4j.version>1.8.5</langgraph4j.version>
 	</properties>
 	<dependencies>
 		<dependency>
