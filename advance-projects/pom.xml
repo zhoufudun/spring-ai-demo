@@ -23,6 +23,7 @@
         <module>A05-agent-langgraph-simple</module>
         <module>A05-agent-langgraph-simple-zfd</module>
         <module>A06-ReAct-agent</module>
+        <module>A06-ReAct-agent-zfd</module>
     </modules>
 
     <properties>
