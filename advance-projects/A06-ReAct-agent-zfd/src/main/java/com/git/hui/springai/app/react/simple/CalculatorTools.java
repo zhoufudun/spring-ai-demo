@@ -78,6 +78,9 @@ public class CalculatorTools {
                 .toolObjects(this)
                 .build()
                 .getToolCallbacks();
+//        ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
+//                .toolObjects(this)
+//                .build().getToolCallbacks();
         return List.of(toolCallbacks);
     }
 }

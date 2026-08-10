@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 流式 ReAct Agent 演示应用
  */
-//@Component
+@Component
 public class StreamReActRunner implements CommandLineRunner {
 
     private final ChatClient chatClient;
@@ -27,7 +27,7 @@ public class StreamReActRunner implements CommandLineRunner {
         List<ToolCallback> tools = calculatorTools.getTools();
 
         // 2. 创建流式 ReAct Agent
-        StreamReActAgent agent = new StreamReActAgent(chatClient, tools);
+        StreamReActAgent_zfd agent = new StreamReActAgent_zfd(chatClient, tools);
 
         // 3. 运行示例
         System.out.println("\n╔════════════════════════════════════════╗");

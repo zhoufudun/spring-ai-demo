@@ -1,6 +1,6 @@
 package com.git.hui.springai.app.react.simple;
 
-import com.git.hui.springai.app.react.service.LlmService;
+import com.git.hui.springai.app.react.service.LlmService_zfd;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.boot.CommandLineRunner;
@@ -11,13 +11,13 @@ import java.util.List;
 /**
  * 轻量级 ReAct Agent 演示应用
  */
-@Component
+//@Component
 public class SimpleReActRunner implements CommandLineRunner {
 
-    private final LlmService llmService;
+    private final LlmService_zfd llmService;
     private final ChatClient chatClient;
 
-    public SimpleReActRunner(LlmService llmService) {
+    public SimpleReActRunner(LlmService_zfd llmService) {
         this.llmService = llmService;
         this.chatClient = llmService.getChatClient(null);
     }
@@ -29,7 +29,7 @@ public class SimpleReActRunner implements CommandLineRunner {
         List<ToolCallback> tools = calculatorTools.getTools();
 
         // 2. 创建 ReAct Agent
-        SimpleReActAgent agent = new SimpleReActAgent(chatClient, tools);
+        SimpleReActAgent_zfd agent = new SimpleReActAgent_zfd(chatClient, tools);
 
         // 3. 运行示例
         System.out.println("\n========== 示例 1: 简单加法 ==========");
