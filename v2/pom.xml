@@ -26,7 +26,9 @@
 
     <modules>
         <module>T01-agentic-skills-simple-design</module>
+        <module>T01-agentic-skills-simple-design-zfd</module>
         <module>T02-manual-qa-cli-robot</module>
+        <module>T02-manual-qa-cli-robot-zfd</module>
         <module>T03-manual-qa-web-robot</module>
         <module>T04-todo-agent</module>
         <module>T05-voice-chat-robot</module>

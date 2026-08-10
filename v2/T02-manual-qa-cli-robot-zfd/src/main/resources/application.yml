@@ -8,8 +8,6 @@
 #        options:
 #          model: GLM-4.5-Flash
 spring:
-  thymeleaf:
-    cache: false
   ai:
     zhipuai:
       # api-key 使用你自己申请的进行替换；如果为了安全考虑，可以通过启动参数进行设置
@@ -17,10 +15,3 @@ spring:
       chat: # 聊天模型
         options:
           model: GLM-5.2
-      image: # 图像模型
-        options:
-          model: CogView-3-Flash
-
-    dashboard:
-      enable: false
-      api-key: ${dashboard-api-key}

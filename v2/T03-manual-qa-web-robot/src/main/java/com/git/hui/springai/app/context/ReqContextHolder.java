@@ -22,6 +22,5 @@ public class ReqContextHolder {
         reqId.remove();
     }
 
-    public record ReqInfo(String chatId, SseEmitter sse) {
-    }
+    public record ReqInfo(String chatId,SseEmitter sse){}
 }

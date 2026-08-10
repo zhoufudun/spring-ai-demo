@@ -9,19 +9,11 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
-import org.springframework.ai.image.Image;
-import org.springframework.ai.image.ImageModel;
-import org.springframework.ai.image.ImageOptionsBuilder;
-import org.springframework.ai.image.ImagePrompt;
-import org.springframework.ai.image.ImageResponse;
+import org.springframework.ai.image.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.imageio.ImageIO;
@@ -41,9 +33,9 @@ import java.util.concurrent.TimeUnit;
  * @author YiHui
  * @date 2026/1/28
  */
-//@RequestMapping("/api")
-//@RestController
-public class ChatApiController {
+@RequestMapping("/api")
+@RestController
+public class ChatApiController_zfd {
 
     private final ChatClient chatClient;
 
@@ -52,23 +44,17 @@ public class ChatApiController {
     @Autowired
     private Environment environment;
 
-    public ChatApiController(ChatClient.Builder chatClientBuilder, ImageModel imgModel) {
+    public ChatApiController_zfd(ChatClient.Builder chatClientBuilder, ImageModel imgModel) {
         this.imgModel = imgModel;
-        this.chatClient = chatClientBuilder
+
+        chatClient = chatClientBuilder
                 .defaultTools(AskUserQuestionTool.builder()
                         .questionHandler(new WebQuestionHandler())
                         .build())
-
                 .defaultAdvisors(
-                        // Tool calling advisor
                         ToolCallAdvisor.builder().conversationHistoryEnabled(false).build(),
-                        // Chat memory advisor - after the tool calling advisor to remember tool calls
-                        MessageChatMemoryAdvisor.builder(MessageWindowChatMemory.builder().maxMessages(500).build()).build(),
-                        // Custom logging advisor
-                        MyLoggingAdvisor.builder()
-                                .showAvailableTools(true)
-                                .showSystemMessage(true)
-                                .build())
+                        MessageChatMemoryAdvisor.builder(MessageWindowChatMemory.builder().maxMessages(100).build()).build(),
+                        MyLoggingAdvisor.builder().showAvailableTools(true).showSystemMessage(true).build())
                 .build();
     }
 
@@ -77,45 +63,41 @@ public class ChatApiController {
                                 @RequestParam("question") String question) {
         SseEmitter sseEmitter = new SseEmitter(Long.MAX_VALUE);
         ReqContextHolder.setReqId(new ReqContextHolder.ReqInfo(chatId, sseEmitter));
-
         // 启动异步线程处理SSE响应
-        Thread thread = new Thread(() -> {
+        new Thread(() -> {
             try {
+                String content = chatClient.prompt(question).advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
+                        .call().content();
+                System.out.println("---> 接收大模型返回: " + content.replaceAll("\n", "\t"));
+                sseEmitter.send(
+                        SseEmitter.event()
+                                .name("message")
+                                .data(content)
+                );
+                // 发送结束信号
+                /**
+                 * 网页端会监听done事件，做出全部连接，这里的done不是固定的，客户端和服务端约定一致就行
+                 */
+                sseEmitter.send(SseEmitter.event().name("done").data(""));
+            } catch (Exception e) {
                 try {
-                    String content = chatClient.prompt(question)
-                            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, chatId))
-                            .call()
-                            .content();
-                    System.out.println("---> 接收大模型返回: " + content.replaceAll("\n", "\t"));
-                    sseEmitter.send(content);
-
-                    // 发送结束信号
-                    sseEmitter.send(SseEmitter.event().name("done").data(""));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    sseEmitter.send(SseEmitter.event()
+                            .name("error")
+                            .data("Exception occurred: " + e.getMessage()));
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
                 }
-
+            } finally {
                 // 等待一段时间以确保前端收到done事件
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-            } catch (Exception e) {
-                try {
-                    sseEmitter.send(SseEmitter.event()
-                            .name("error")
-                            .data("Exception occurred: " + e.getMessage()));
-                } catch (IOException ioException) {
-                    throw new RuntimeException(ioException);
-                }
-            } finally {
                 sseEmitter.complete();
                 ReqContextHolder.clear();
             }
-        });
-
-        thread.start();
+        }).start();
 
         return sseEmitter;
     }
@@ -150,8 +132,10 @@ public class ChatApiController {
     @GetMapping(path = "/genImg")
     public String genImg(@RequestParam String msg) throws IOException {
         if ("true".equals(environment.getProperty("spring.ai.dashboard.enable"))) {
+            System.out.println("======true=======");
             return QwenImgGen.call(environment.getProperty("spring.ai.dashboard.api-key"), msg);
         } else {
+            System.out.println("=====false=======");
             // 这里使用的是智谱的文生图模型，效果较差
             ImageResponse response = imgModel.call(new ImagePrompt(msg,
                     ImageOptionsBuilder.builder()
@@ -164,13 +148,25 @@ public class ChatApiController {
                             .style("natural")
                             .build())
             );
+
+//            ImageResponse imageResponse = imgModel.call(new ImagePrompt(msg,
+//                    ImageOptionsBuilder.builder()
+//                            .height(1344)
+//                            .width(768)
+//                            .model(environment.getProperty("spring.ai.zhipuai.image.options.mode"))
+//                            .responseFormat("png")
+//                            .style("natural").build()));
+
+//            Image output = response.getResult().getOutput();
             Image img = response.getResult().getOutput();
+//            BufferedImage read = ImageIO.read(new URL(img.getUrl()));
             BufferedImage image = ImageIO.read(new URL(img.getUrl()));
 
             // 将图片转换为Base64编码
             java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
             ImageIO.write(image, "png", baos);
             byte[] imageBytes = baos.toByteArray();
+            System.out.println(imageBytes.length);
             return java.util.Base64.getEncoder().encodeToString(imageBytes);
         }
     }
@@ -184,7 +180,7 @@ public class ChatApiController {
          */
         @Override
         public Map<String, String> handle(List<AskUserQuestionTool.Question> questions) {
-            // 创建用于存储问题和答案的映射
+            // 创建用于存储问题和答案的映射:question:answer
             Map<String, String> answers = new HashMap<>();
             // 获取当前请求的上下文信息
             ReqContextHolder.ReqInfo req = ReqContextHolder.getReqId();
@@ -201,7 +197,7 @@ public class ChatApiController {
                 // 遍历选项并发送给用户
                 for (int i = 0; i < options.size(); i++) {
                     AskUserQuestionTool.Question.Option opt = options.get(i);
-                    sendMsg(sseEmitter, String.format("\n  %d. %s - %s%n", i + 1, opt.label(), opt.description()));
+                    sendMsg(sseEmitter, String.format("  %d. %s - %s%n", i + 1, opt.label(), opt.description()));
                 }
 
                 // 根据是否支持多选发送不同的提示信息
@@ -218,11 +214,11 @@ public class ChatApiController {
                     queue = new LinkedBlockingQueue<>();
                     chatHistory.put(req.chatId(), queue);
                 }
-                
+
                 String response = null;
                 try {
                     // 等待最多5分钟获取用户响应，超时则返回空字符串
-                    response = queue.poll(5, TimeUnit.MINUTES);
+                    response = queue.poll(5,TimeUnit.MINUTES);
                     if (response == null) {
                         response = ""; // 超时情况下的默认响应
                     }
@@ -233,7 +229,7 @@ public class ChatApiController {
                 }
 
                 // 解析用户响应并存入答案映射
-                answers.put(q.question(), parseResponse(response, options));
+                answers.put(q.question(), parseResponse(response,options));
             }
 
             // 返回包含所有问题和答案的映射
