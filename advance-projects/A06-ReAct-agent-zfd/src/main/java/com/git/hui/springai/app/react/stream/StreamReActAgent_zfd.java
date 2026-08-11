@@ -27,7 +27,7 @@ public class StreamReActAgent_zfd {
     private static final Logger log = LoggerFactory.getLogger(StreamReActAgent_zfd.class);
 
     // 最大迭代次数
-    private static final int MAX_ITERATIONS = 10;
+    private static final int MAX_ITERATIONS = 5;
 
     private final ChatClient chatClient;
     private final List<ToolCallback> tools;
@@ -65,6 +65,10 @@ public class StreamReActAgent_zfd {
 
                 // Act & Observe: 检查是否需要调用工具
                 if (hasToolCalls(assistantMessage)) {
+
+                    // 工具执行记录保存起来: 必须要保存
+                    messages.add(assistantMessage);
+
                     // 执行工具调用
                     String toolResult = executeTools(assistantMessage);
 
@@ -151,7 +155,7 @@ public class StreamReActAgent_zfd {
                 String text = assistantMessage.getText();
                 if (text != null && !text.isEmpty()) {
                     fullText.append(text);
-                    log.info("【流式文本】{}", text);
+//                    log.info("【流式文本】{}", text);
                 }
                 // 检测工具调用
                 if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
@@ -168,7 +172,7 @@ public class StreamReActAgent_zfd {
             AssistantMessage currentMessage = lastMessage.get();
             if ((currentMessage.getToolCalls() == null || currentMessage.getToolCalls().isEmpty())
                     && fullText.length() > 0) {
-                // 重新构建包含完整文本的消息
+                // 重新构建包含完整文本的消息, 不包含工具
                 return AssistantMessage.builder()
                         .content(fullText.toString())
                         .build();

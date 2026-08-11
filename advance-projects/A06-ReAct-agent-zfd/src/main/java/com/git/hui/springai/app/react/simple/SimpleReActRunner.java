@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 轻量级 ReAct Agent 演示应用
  */
-//@Component
+@Component
 public class SimpleReActRunner implements CommandLineRunner {
 
     private final LlmService_zfd llmService;

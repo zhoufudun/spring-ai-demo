@@ -66,6 +66,8 @@ public class SimpleReActAgent_zfd {
                 AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
                 // 2、Act & Observe: 检查是否需要调用工具
                 if (hasToolCalls(assistantMessage)) {
+                    // 2.0、工具执行记录保存起来: 必须要保存
+                    messages.add(assistantMessage);
                     // 2.1、执行工具调用
                     String toolResult = executeTools(assistantMessage);
                     // 2.2、获取调用工具的名称

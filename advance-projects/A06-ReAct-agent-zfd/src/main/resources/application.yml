@@ -40,4 +40,5 @@ spring:
       api-key: ${zhipuai-api-key}
       chat: # 聊天模型
         options:
-          model: GLM-5.2
+          model: GLM-4-Flash # 免费
+#          model: GLM-5.2 #付费
