@@ -54,6 +54,17 @@ public class StreamReActAgent_zfd {
         log.info("💬 问题：{}", question);
 
         // 2. ReAct 循环
+
+        /**
+         *
+         * List<Message> messages = new ArrayList<>();
+         * messages.add(new UserMessage(question));           // 用户问题
+         * messages.add(systemMessage);                       // 系统提示
+         * messages.add(assistantMessage);                    // AI 思考
+         * messages.add(toolResponseMessage);                 // 工具结果
+         * // ... 不断追加，形成完整上下文
+         *
+         */
         for (int iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             log.info("┌────────────────────────────────────────");
             log.info("│ 🔁 第 {} 轮思考", iteration);

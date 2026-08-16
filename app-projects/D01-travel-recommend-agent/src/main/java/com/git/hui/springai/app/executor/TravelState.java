@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.serializer.StateSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.spring.ai.serializer.std.MessageSerializer;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.springframework.ai.chat.messages.Message;
 
 import java.util.List;
@@ -46,7 +47,12 @@ public class TravelState extends AgentState {
      * @return An instance of `StateSerializer` for serializing and deserializing `State` objects.
      */
     public static StateSerializer<TravelState> serializer() {
-        var serializer = new ObjectStreamStateSerializer<>(TravelState::new);
+        var serializer = new ObjectStreamStateSerializer<>(new AgentStateFactory<TravelState>() {
+            @Override
+            public TravelState apply(Map<String, Object> stringObjectMap) {
+                return new TravelState(stringObjectMap);
+            }
+        });
         serializer.mapper().register(Message.class, new MessageSerializer());
         serializer.mapper().register(FoodRecommendAgent.TravelFoodRecommends.class, new JsonSerializer<>(FoodRecommendAgent.TravelFoodRecommends.class));
         serializer.mapper().register(TravelResVo.class, new JsonSerializer<>(TravelResVo.class));

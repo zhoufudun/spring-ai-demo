@@ -14,9 +14,13 @@
     <packaging>pom</packaging>
     <modules>
         <module>L01-simple-demo</module>
+        <module>L01-simple-demo-zfd</module>
         <module>L02-human-in-loop</module>
+        <module>L02-human-in-loop-zfd</module>
         <module>L03-skill-creator</module>
+        <module>L03-skill-creator-zfd</module>
         <module>L04-handsoff</module>
+        <module>L04-handsoff-zfd</module>
         <module>L05-multi-agent-sequence</module>
         <module>L06-multi-agent-paralle</module>
         <module>L07-multi-agent-route</module>
