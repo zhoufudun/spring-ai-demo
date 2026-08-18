@@ -71,6 +71,7 @@ public class ExpressOrderTools_zfd {
     @Tool(description = "保存快递的收件人信息，用于快递下单场景")
     public String receiveAddress(@ToolParam(description = "收件人详细信息，包括姓名、电话、详细地址信息等") String receiveInfo
             , ToolContext toolContext) { // toolContext 是agent执行过程上下文信息，可以打印出来看看什么信息
+
         log.info("【快递下单】收件人信息：{}", receiveInfo);
         // 收件人信息保存到上下文中
         saveInfoToContext(toolContext, KEY_RECEIVE_INFO, receiveInfo);
@@ -167,6 +168,12 @@ public class ExpressOrderTools_zfd {
      */
     @Tool(description = "当用户确认创建订单时，调用这个工具执行创建订单动作")
     public String createOrder(ToolContext toolContext) {
+        var step = getFromContext(toolContext, KEY_ORDER_STEP);
+        var intStep = Integer.parseInt(step);
+        if (intStep < 4) {
+            return "\n⚠️ 信息未填写完整，请继续补充";
+        }
+
         log.info("【快递下单】创建订单");
 
         String receiveInfo = getFromContext(toolContext, KEY_RECEIVE_INFO);

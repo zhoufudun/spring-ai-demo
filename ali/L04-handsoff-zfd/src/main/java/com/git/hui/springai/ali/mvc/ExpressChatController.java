@@ -4,15 +4,21 @@ import com.alibaba.cloud.ai.graph.RunnableConfig;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
 import com.git.hui.springai.ali.express.HandoffExpressOrderHook;
+import com.git.hui.springai.ali.express.HandoffExpressOrderHook_zfd;
 import com.git.hui.springai.ali.express.tools.ExpressOrderTools;
+import com.git.hui.springai.ali.express.tools.ExpressOrderTools_zfd;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,25 +48,42 @@ public class ExpressChatController {
     }
 
     /**
+     * http://localhost:8080/express/
+     * @return
+     */
+    private String expressHtml;
+
+    @RequestMapping(value = {"/"}, produces = "text/html;charset=UTF-8")
+    public String sql() throws IOException {
+        if (expressHtml == null) {
+            ClassPathResource resource = new ClassPathResource("templates/express-chat.html");
+            try (InputStream is = resource.getInputStream()) {
+                expressHtml = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        }
+        return expressHtml;
+    }
+
+    /**
      * 获取或创建会话的 Agent
      */
     private ReactAgent getOrCreateAgent(String sessionId) {
         return agentMap.computeIfAbsent(sessionId, key -> {
-            HandoffExpressOrderHook expressHook = new HandoffExpressOrderHook();
+            HandoffExpressOrderHook_zfd handoffExpressOrderHookZfd = new HandoffExpressOrderHook_zfd();
 
-            ToolCallback receiveAddress = ExpressOrderTools.findByName("receiveAddress");
-            ToolCallback sendAddress = ExpressOrderTools.findByName("sendAddress");
-            ToolCallback expressInfo = ExpressOrderTools.findByName("expressInfo");
-            ToolCallback showExpressOrder = ExpressOrderTools.findByName("showExpressOrder");
-            ToolCallback createOrder = ExpressOrderTools.findByName("createOrder");
+            ToolCallback receiveAddress = ExpressOrderTools_zfd.findByName("receiveAddress");
+            ToolCallback sendAddress = ExpressOrderTools_zfd.findByName("sendAddress");
+            ToolCallback expressInfo = ExpressOrderTools_zfd.findByName("expressInfo");
+            ToolCallback showExpressOrder = ExpressOrderTools_zfd.findByName("showExpressOrder");
+            ToolCallback createOrder = ExpressOrderTools_zfd.findByName("createOrder");
 
             return ReactAgent.builder()
-                    .name("express_order_agent")
-                    .model(chatModel)
-                    .tools(List.of(receiveAddress, sendAddress, expressInfo, showExpressOrder, createOrder))
+                    .name("express-order-agent")
+                    .hooks(handoffExpressOrderHookZfd)
+                    .tools(List.of(receiveAddress,sendAddress,expressInfo,showExpressOrder,createOrder))
                     .saver(memorySaver)
-                    .hooks(expressHook)
                     .enableLogging(true)
+                    .model(chatModel)
                     .build();
         });
     }
