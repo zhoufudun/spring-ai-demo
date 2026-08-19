@@ -22,6 +22,7 @@
         <module>L04-handsoff</module>
         <module>L04-handsoff-zfd</module>
         <module>L05-multi-agent-sequence</module>
+        <module>L05-multi-agent-sequence-zfd</module>
         <module>L06-multi-agent-paralle</module>
         <module>L07-multi-agent-route</module>
         <module>L08-multi-agent-supervisor</module>
