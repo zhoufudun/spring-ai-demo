@@ -36,6 +36,110 @@ public class WriterController {
         this.seqAgent = seqAgent;
     }
 
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> createArticleStream2(@RequestParam String topic) {
+        log.info("开始创作主题：{}", topic);
+        try {
+            SequentialAgent sequentialAgent = seqAgent.seqAgent();
+            Flux<NodeOutput> nodeOutputFlux = sequentialAgent.stream(topic);
+            return nodeOutputFlux
+                    .filter(node-> !(node instanceof StreamingOutput<?> so && so.getOutputType()!=OutputType.AGENT_MODEL_FINISHED))
+                    .map(nodeOutput -> {
+                        String node = nodeOutput.node();
+                        // 有三个agentName
+                        String agentName = nodeOutput.agent();
+                        // 构建响应数据
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("node", node);
+                        data.put("agent", agentName);
+
+                        StringBuilder contentBuilder = new StringBuilder();
+                        boolean hasContent = false;
+
+                        if(nodeOutput instanceof StreamingOutput<?> streamingOutput){
+                            Message message = streamingOutput.message();
+                            if(message instanceof AssistantMessage assistantMessage){
+                                if(!assistantMessage.hasToolCalls()){
+                                    String text = assistantMessage.getText();
+                                    if (text != null && !text.trim().isEmpty()) {
+                                        contentBuilder.append(text);
+                                        hasContent = true;
+                                    }
+                                }
+                            }
+                        }
+                        System.out.println(contentBuilder);
+
+                        data.put("content", contentBuilder.toString());
+                        data.put("hasContent", hasContent);
+
+                        // 根据 agent 类型设置阶段标识
+                        String stage = determineStage(agentName);
+                        data.put("stage", stage);
+
+                        String json;
+                        try {
+                            json = objectMapper.writeValueAsString(data);
+                        } catch (JsonProcessingException e) {
+                            log.error("JSON 序列化失败", e);
+                            json = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
+                        }
+
+                        return ServerSentEvent.builder(json).event("message").build();
+
+                    }).onErrorResume(error -> {
+                        log.error("流式创作过程中发生错误", error);
+
+                        Map<String, Object> errorData = new HashMap<>();
+                        errorData.put("error", true);
+                        errorData.put("errorType", error.getClass().getSimpleName());
+                        errorData.put("errorMessage", error.getMessage() != null ? error.getMessage() : "未知错误");
+
+                        String errorJson;
+                        try {
+                            errorJson = objectMapper.writeValueAsString(errorData);
+                        } catch (JsonProcessingException e) {
+                            log.error("错误信息 JSON 序列化失败", e);
+                            errorJson = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
+                        }
+
+                        return Flux.just(
+                                ServerSentEvent.<String>builder()
+                                        .event("error")
+                                        .data(errorJson)
+                                        .build()
+                        );
+                    })
+                    .doOnComplete(() -> {
+                        log.info("流式创作完成...");
+                    });
+
+        } catch (Exception e) {
+            log.error("创建流式接口时发生错误", e);
+
+            Map<String, Object> errorData = new HashMap<>();
+            errorData.put("error", true);
+            errorData.put("errorType", e.getClass().getSimpleName());
+            errorData.put("errorMessage", "初始化失败：" + e.getMessage());
+
+            String errorJson;
+            try {
+                errorJson = objectMapper.writeValueAsString(errorData);
+            } catch (JsonProcessingException ex) {
+                log.error("错误信息 JSON 序列化失败", ex);
+                errorJson = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
+            }
+
+            return Flux.just(
+                    ServerSentEvent.<String>builder()
+                            .event("error")
+                            .data(errorJson)
+                            .build()
+            );
+        }
+    }
+
     /**
      * 流式文章创作接口
      * 使用 SSE (Server-Sent Events) 实时返回创作进度
@@ -43,31 +147,31 @@ public class WriterController {
      * @param topic 文章主题
      * @return 流式响应
      */
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/stream2", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> createArticleStream(@RequestParam String topic) {
         log.info("开始创作主题：{}", topic);
-        
+
         try {
             SequentialAgent sequentialAgent = seqAgent.seqAgent();
-            
+
             // 获取流式输出
             Flux<NodeOutput> agentStream = sequentialAgent.stream(topic);
-            
+
             return agentStream
-                    .filter(nodeOutput -> !(nodeOutput instanceof StreamingOutput<?> so && 
+                    .filter(nodeOutput -> !(nodeOutput instanceof StreamingOutput<?> so &&
                             so.getOutputType() == OutputType.AGENT_MODEL_FINISHED))
                     .map(nodeOutput -> {
                         String node = nodeOutput.node();
                         String agentName = nodeOutput.agent();
-                        
+
                         // 构建响应数据
                         Map<String, Object> data = new HashMap<>();
                         data.put("node", node);
                         data.put("agent", agentName);
-                        
+
                         StringBuilder contentBuilder = new StringBuilder();
                         boolean hasContent = false;
-                        
+
                         if (nodeOutput instanceof StreamingOutput<?> streamingOutput) {
                             Message message = streamingOutput.message();
                             if (message instanceof AssistantMessage assistantMessage) {
@@ -80,14 +184,14 @@ public class WriterController {
                                 }
                             }
                         }
-                        
+
                         data.put("content", contentBuilder.toString());
                         data.put("hasContent", hasContent);
-                        
+
                         // 根据 agent 类型设置阶段标识
                         String stage = determineStage(agentName);
                         data.put("stage", stage);
-                        
+
                         String json;
                         try {
                             json = objectMapper.writeValueAsString(data);
@@ -95,7 +199,7 @@ public class WriterController {
                             log.error("JSON 序列化失败", e);
                             json = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
                         }
-                        
+
                         return ServerSentEvent.<String>builder()
                                 .event("message")
                                 .data(json)
@@ -103,12 +207,12 @@ public class WriterController {
                     })
                     .onErrorResume(error -> {
                         log.error("流式创作过程中发生错误", error);
-                        
+
                         Map<String, Object> errorData = new HashMap<>();
                         errorData.put("error", true);
                         errorData.put("errorType", error.getClass().getSimpleName());
                         errorData.put("errorMessage", error.getMessage() != null ? error.getMessage() : "未知错误");
-                        
+
                         String errorJson;
                         try {
                             errorJson = objectMapper.writeValueAsString(errorData);
@@ -116,7 +220,7 @@ public class WriterController {
                             log.error("错误信息 JSON 序列化失败", e);
                             errorJson = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
                         }
-                        
+
                         return Flux.just(
                                 ServerSentEvent.<String>builder()
                                         .event("error")
@@ -127,15 +231,15 @@ public class WriterController {
                     .doOnComplete(() -> {
                         log.info("流式创作完成");
                     });
-                    
+
         } catch (Exception e) {
             log.error("创建流式接口时发生错误", e);
-            
+
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("error", true);
             errorData.put("errorType", e.getClass().getSimpleName());
             errorData.put("errorMessage", "初始化失败：" + e.getMessage());
-            
+
             String errorJson;
             try {
                 errorJson = objectMapper.writeValueAsString(errorData);
@@ -143,7 +247,7 @@ public class WriterController {
                 log.error("错误信息 JSON 序列化失败", ex);
                 errorJson = "{\"error\":true,\"errorMessage\":\"JSON 序列化失败\"}";
             }
-            
+
             return Flux.just(
                     ServerSentEvent.<String>builder()
                             .event("error")
@@ -152,7 +256,7 @@ public class WriterController {
             );
         }
     }
-    
+
     /**
      * 根据 agent 名称确定创作阶段
      */
