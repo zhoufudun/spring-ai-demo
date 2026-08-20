@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 文章创作 - 多智能体协作</title>
     <!-- 引入 marked.js 用于 Markdown 解析 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.staticfile.org/marked/9.1.2/marked.min.js"></script>
     <!-- 引入 highlight.js 用于代码高亮 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
@@ -506,9 +506,11 @@
 
             // 监听消息事件
             eventSource.addEventListener('message', function(event) {
+                console.log('[SSE] 收到 message 事件:', event.data);
                 try {
                     const data = JSON.parse(event.data);
-                    
+                    console.log('[SSE] 解析后的数据:', data);
+
                     if (data.error) {
                         handleError(data.errorMessage);
                         return;
@@ -516,6 +518,7 @@
 
                     // 根据阶段更新对应的面板
                     if (data.stage && data.hasContent) {
+                        console.log('[SSE] 更新阶段:', data.stage, '内容:', data.content);
                         updateStageContent(data.stage, data.content);
                         activatePanel(data.stage);
                         
@@ -531,9 +534,11 @@
                         if (data.stage === 'review') {
                             isCreationComplete = true;
                         }
+                    } else {
+                        console.log('[SSE] 跳过（stage或hasContent不满足）:', data.stage, data.hasContent);
                     }
                 } catch (e) {
-                    console.error('解析数据失败:', e);
+                    console.error('解析数据失败:', e, '原始数据:', event.data);
                 }
             });
             eventSource.addEventListener('done', () => {
@@ -606,9 +611,8 @@
             const contentElement = document.getElementById(contentId);
             
             if (contentElement) {
-                // 使用 marked.js 将 Markdown 转换为 HTML
-                const htmlContent = marked.parse(contentAccumulators[stage]);
-                contentElement.innerHTML = htmlContent;
+                // 纯文本渲染，避免 marked.js CDN 加载失败问题
+                contentElement.textContent = contentAccumulators[stage];
                 
                 // 滚动到底部
                 contentElement.scrollTop = contentElement.scrollHeight;

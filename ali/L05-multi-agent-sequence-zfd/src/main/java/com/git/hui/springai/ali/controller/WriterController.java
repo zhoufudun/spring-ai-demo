@@ -44,7 +44,7 @@ public class WriterController {
             SequentialAgent sequentialAgent = seqAgent.seqAgent();
             Flux<NodeOutput> nodeOutputFlux = sequentialAgent.stream(topic);
             return nodeOutputFlux
-                    .filter(node-> !(node instanceof StreamingOutput<?> so && so.getOutputType()!=OutputType.AGENT_MODEL_FINISHED))
+                    .filter(node-> !(node instanceof StreamingOutput<?> so && so.getOutputType()==OutputType.AGENT_MODEL_FINISHED))
                     .map(nodeOutput -> {
                         String node = nodeOutput.node();
                         // 有三个agentName
